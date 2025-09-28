@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Polls</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+             background: #f9fafb;
+            min-height: 100vh;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+              color: #2563eb;
+        }
+        .logo span{
+           font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #2563eb;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        /* Poll Navigation */
+        .poll-navigation {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .poll-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .poll-tab {
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        .poll-tab.active {
+           background: #2563eb;
+            color: white;
+            border-color: transparent;
+        }
+
+        .poll-tab:hover:not(.active) {
+            background: #e0e7ff; /* lighter blue hover */
+    border-color: #2563eb;
+        }
+
+        .poll-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+
+        .poll-status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .poll-status.closed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .poll-category {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+          background: #e0f2fe; /* Light Blue */
+    color: #2563eb;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .poll-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .poll-votes-count {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .poll-end-date {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Featured Poll Section */
+        .featured-poll {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .poll-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .poll-description {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .poll-options {
+            margin-bottom: 1.5rem;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .option:hover {
+            background: #e9ecef;
+            border-color: #2563eb;
+        }
+
+        .option input[type="radio"] {
+            margin-right: 0.75rem;
+            transform: scale(1.2);
+        }
+
+        .vote-btn {
+             background: #f59e0b; /* Amber Accent */
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .vote-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .vote-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .suggest-poll, .recent-polls {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            animation: fadeInRight 0.6s ease-out;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .suggest-btn {
+             background: #2563eb; /* Bright Blue */
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            transition: transform 0.3s ease;
+        }
+
+        .suggest-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .recent-poll-item {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .recent-poll-item:hover {
+            background: #e9ecef;
+            border-left-color: #2563eb;
+            transform: translateX(2px);
+        }
+
+        .recent-poll-item.active-poll {
+            border-left-color: #28a745;
+            background: #f0f8f0;
+        }
+
+        .recent-poll-item.closed-poll {
+            border-left-color: #dc3545;
+            opacity: 0.8;
+        }
+
+        .recent-poll-title {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            line-height: 1.3;
+        }
+
+        .recent-poll-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .recent-poll-votes {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .recent-poll-category {
+            font-size: 0.75rem;
+            padding: 0.125rem 0.5rem;
+            background: #e7f3ff;
+            color: #0066cc;
+            border-radius: 8px;
+        }
+
+        /* Results Section */
+        .results {
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .results-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .results-tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .results-tab.active {
+            color:  #2563eb;
+            border-bottom-color:   #2563eb;
+            font-weight: 500;
+        }
+
+        .results-tab:hover:not(.active) {
+            color: #333;
+        }
+
+        .results-content {
+            display: none;
+        }
+
+        .results-content.active {
+            display: block;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            height: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+             background: #2563eb;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+               box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .detailed-results {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .detailed-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .result-item {
+            margin-bottom: 1.5rem;
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .result-option-text {
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+            margin-right: 1rem;
+        }
+
+        .result-stats {
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .result-percentage {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .result-votes {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .result-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .result-fill {
+            background: #2563eb;
+            height: 100%;
+            transition: width 1s ease-out;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .result-fill.winner {
+            background: linear-gradient(90deg, #28a745, #20c997);
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+        }
+
+        .winner-badge {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+
+        .comparison-chart {
+            margin-top: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            text-align: center;
+            color: #333;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .close-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color:  #2563eb;;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .option-inputs {
+            margin-top: 1rem;
+        }
+
+        .option-input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .option-input {
+            flex: 1;
+            margin-right: 0.5rem;
+        }
+
+        .remove-option-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.3s;
+        }
+
+        .remove-option-btn:hover {
+            background: #c82333;
+        }
+
+        .add-option-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            transition: background-color 0.3s;
+        }
+
+        .add-option-btn:hover {
+            background: #218838;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-primary {
+             background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Success Message */
+        .success-message {
+             background: #d1fae5; /* Success Green */
+    color: #16a34a;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        /* Modal Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo"><span>Vote</span>Connect</div>
+                <ul class="nav-links">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#polls">All Polls</a></li>
+                    <li><a href="#results">Results</a></li>
+                    <li><a href="#admin">Admin</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Poll Navigation -->
+        <div class="poll-navigation">
+            <div class="poll-tabs" id="poll-tabs">
+                <!-- Poll tabs will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Featured Poll Section -->
+            <div class="featured-poll">
+                <div class="poll-category" id="current-poll-category">Transportation</div>
+                
+                <h2 class="poll-title" id="current-poll-title">Should we implement a new bike lane on Main Street?</h2>
+                
+                <div class="poll-meta">
+                    <div class="poll-votes-count" id="current-poll-votes">88 votes</div>
+                    <div class="poll-end-date" id="current-poll-end-date">Ends: October 15, 2025</div>
+                </div>
+                
+                <p class="poll-description" id="current-poll-description">
+                    The city is considering adding a dedicated bike lane on Main Street to improve cycling safety and promote eco-friendly transportation. Your input will help guide this important decision.
+                </p>
+                
+                <form id="poll-form" class="poll-options">
+                    <!-- Options will be populated by JavaScript -->
+                </form>
+
+                <button class="vote-btn" id="vote-btn">Cast Your Vote</button>
+
+                <!-- Results Section (hidden initially) -->
+                <div class="results" id="results-section">
+                    <div class="results-tabs">
+                        <button class="results-tab active" id="overview-tab">📊 Overview</button>
+                        <button class="results-tab" id="chart-tab">📈 Charts</button>
+                        <button class="results-tab" id="detailed-tab">📋 Detailed</button>
+                    </div>
+
+                    <!-- Overview Tab -->
+                    <div class="results-content active" id="overview-content">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number" id="total-votes-stat">0</div>
+                                <div class="stat-label">Total Votes</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="leading-option-stat">-</div>
+                                <div class="stat-label">Leading Option</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="participation-stat">0%</div>
+                                <div class="stat-label">Participation Rate</div>
+                            </div>
+                        </div>
+                        <div id="overview-results-container">
+                            <!-- Quick results will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Charts Tab -->
+                    <div class="results-content" id="chart-content">
+                        <div class="chart-container">
+                            <div class="chart-wrapper">
+                                <canvas id="pieChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-wrapper">
+                                <canvas id="barChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Tab -->
+                    <div class="results-content" id="detailed-content">
+                        <div class="detailed-results">
+                            <div class="detailed-title">Detailed Breakdown</div>
+                            <div id="detailed-results-container">
+                                <!-- Detailed results will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Suggest Poll Section -->
+                <div class="suggest-poll">
+                    <h3 class="section-title">💡 Have an idea?</h3>
+                    <p style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">
+                        Suggest a new poll topic for the community to vote on.
+                    </p>
+                    <button class="suggest-btn" id="suggest-btn">Suggest a Poll</button>
+                </div>
+
+                <!-- Recent Polls Section -->
+                <div class="recent-polls">
+                    <h3 class="section-title">📊 All Polls</h3>
+                    <div id="recent-polls-list">
+                        <!-- Poll list will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Poll Suggestion Modal -->
+    <div class="modal" id="suggest-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">💡 Suggest a New Poll</h3>
+                <button class="close-btn" id="close-modal">&times;</button>
+            </div>
+
+            <div class="success-message" id="success-message">
+                🎉 Your poll suggestion has been submitted successfully! It will be reviewed by administrators.
+            </div>
+
+            <form id="suggest-form">
+                <div class="form-group">
+                    <label class="form-label" for="poll-title">Poll Title *</label>
+                    <input type="text" id="poll-title" class="form-input" 
+                           placeholder="e.g., Should we extend library hours?" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="poll-description">Description *</label>
+                    <textarea id="poll-description" class="form-textarea" 
+                              placeholder="Provide context and details about your poll question..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Poll Options *</label>
+                    <div class="option-inputs" id="option-inputs">
+                        <div class="option-input-group">
+                            <input type="text" class="form-input option-input" 
+                                   placeholder="Option 1 (e.g., Yes, extend to 10 PM)" required>
+                            <button type="button" class="remove-option-btn" onclick="removeOption(this)">Remove</button>
+                        </div>
+                        <div class="option-input-group">
+                            <input type="text" class="form-input option-input" 
+                                   placeholder="Option 2 (e.g., No, keep current hours)" required>
+                            <button type="button" class="remove-option-btn" onclick="removeOption(this)">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-option-btn" id="add-option-btn">+ Add Another Option</button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="submitter-name">Your Name (Optional)</label>
+                    <input type="text" id="submitter-name" class="form-input" 
+                           placeholder="Anonymous submission if left blank">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="submitter-email">Your Email (Optional)</label>
+                    <input type="email" id="submitter-email" class="form-input" 
+                           placeholder="For updates on your suggestion">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="cancel-btn">Cancel</button>
+                    <button type="submit" class="btn-primary">Submit Suggestion</button>
+                </div>
+            </form>
+        </div>
+    </div>
+<section id="admin-panel" style="display:none; padding:20px;">
+  <h2>Admin Panel</h2>
+  <div id="suggestions-list"></div>
+</section>
+
+    <script>
+        // Sample data structure for multiple polls
+        let allPolls = [
+            {
+                id: 1,
+                title: "Should we implement a new bike lane on Main Street?",
+                description: "The city is considering adding a dedicated bike lane on Main Street to improve cycling safety and promote eco-friendly transportation. Your input will help guide this important decision.",
+                options: [
+                    { id: "strongly-support", text: "Strongly Support - It's needed for safety", votes: 45 },
+                    { id: "somewhat-support", text: "Somewhat Support - Good idea with conditions", votes: 23 },
+                    { id: "neutral", text: "Neutral - No strong opinion", votes: 12 },
+                    { id: "oppose", text: "Oppose - May cause traffic issues", votes: 8 }
+                ],
+                totalVotes: 88,
+                status: 'active',
+                endDate: '2025-10-15',
+                category: 'Transportation'
+            },
+            {
+                id: 2,
+                title: "New Community Center Location",
+                description: "Help us choose the best location for our new community center. Consider accessibility, parking, and proximity to public transportation when making your decision.",
+                options: [
+                    { id: "downtown", text: "Downtown near City Hall", votes: 67 },
+                    { id: "eastside", text: "East Side Community Park", votes: 52 },
+                    { id: "westside", text: "West Side Shopping District", votes: 33 },
+                    { id: "northside", text: "North Side Recreation Area", votes: 28 }
+                ],
+                totalVotes: 180,
+                status: 'closed',
+                endDate: '2025-09-20',
+                category: 'Community'
+            },
+            {
+                id: 3,
+                title: "Weekend Farmers Market Hours",
+                description: "We're considering extending our weekend farmers market hours. What time frame would work best for you and your family?",
+                options: [
+                    { id: "early", text: "Early Bird: 7 AM - 1 PM", votes: 34 },
+                    { id: "regular", text: "Current Hours: 9 AM - 3 PM", votes: 28 },
+                    { id: "extended", text: "Extended: 8 AM - 4 PM", votes: 27 },
+                    { id: "evening", text: "Evening Market: 4 PM - 8 PM", votes: 15 }
+                ],
+                totalVotes: 104,
+                status: 'active',
+                endDate: '2025-10-05',
+                category: 'Events'
+            },
+            {
+                id: 4,
+                title: "Snow Removal Priority Streets",
+                description: "Help prioritize which streets should be cleared first during snow storms. Your input will help create our winter maintenance schedule.",
+                options: [
+                    { id: "schools", text: "School zones and bus routes", votes: 89 },
+                    { id: "emergency", text: "Emergency services access roads", votes: 76 },
+                    { id: "main", text: "Main commercial streets", votes: 38 },
+                    { id: "residential", text: "High-traffic residential areas", votes: 23 }
+                ],
+                totalVotes: 226,
+                status: 'closed',
+                endDate: '2025-08-30',
+                category: 'Infrastructure'
+            },
+            {
+                id: 5,
+                title: "Public Library Digital Services",
+                description: "What new digital services would you most like to see at our public library? This will help us allocate our technology budget effectively.",
+                options: [
+                    { id: "ebooks", text: "Expanded e-book and audiobook collection", votes: 18 },
+                    { id: "workshops", text: "Digital literacy workshops", votes: 14 },
+                    { id: "makerspace", text: "3D printing and maker space", votes: 22 },
+                    { id: "gaming", text: "Gaming and VR experiences", votes: 11 }
+                ],
+                totalVotes: 65,
+                status: 'active',
+                endDate: '2025-10-25',
+                category: 'Education'
+            }
+        ];
+
+        let currentPollId = 1;
+        let userVotes = {}; // Track which polls the user has voted on
+
+        // Store for submitted poll suggestions
+        let pollSuggestions = [];
+
+        // DOM elements
+        const voteBtn = document.getElementById('vote-btn');
+        const pollForm = document.getElementById('poll-form');
+        const resultsSection = document.getElementById('results-section');
+        const resultsContainer = document.getElementById('results-container');
+        const suggestBtn = document.getElementById('suggest-btn');
+        
+        // Poll display elements
+        const pollTabs = document.getElementById('poll-tabs');
+        const currentPollTitle = document.getElementById('current-poll-title');
+        const currentPollDescription = document.getElementById('current-poll-description');
+        const currentPollCategory = document.getElementById('current-poll-category');
+        const currentPollVotes = document.getElementById('current-poll-votes');
+        const currentPollEndDate = document.getElementById('current-poll-end-date');
+        const recentPollsList = document.getElementById('recent-polls-list');
+        
+        // Results elements
+        const overviewTab = document.getElementById('overview-tab');
+        const chartTab = document.getElementById('chart-tab');
+        const detailedTab = document.getElementById('detailed-tab');
+        const overviewContent = document.getElementById('overview-content');
+        const chartContent = document.getElementById('chart-content');
+        const detailedContent = document.getElementById('detailed-content');
+        const overviewResultsContainer = document.getElementById('overview-results-container');
+        const detailedResultsContainer = document.getElementById('detailed-results-container');
+        const totalVotesStat = document.getElementById('total-votes-stat');
+        const leadingOptionStat = document.getElementById('leading-option-stat');
+        const participationStat = document.getElementById('participation-stat');
+        
+        // Modal elements
+        const suggestModal = document.getElementById('suggest-modal');
+        const closeModal = document.getElementById('close-modal');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const suggestForm = document.getElementById('suggest-form');
+        const successMessage = document.getElementById('success-message');
+        const addOptionBtn = document.getElementById('add-option-btn');
+
+        // Chart instances
+        let pieChart = null;
+        let barChart = null;
+
+        // Event listeners
+        voteBtn.addEventListener('click', handleVote);
+        suggestBtn.addEventListener('click', showSuggestModal);
+        closeModal.addEventListener('click', hideSuggestModal);
+        cancelBtn.addEventListener('click', hideSuggestModal);
+        suggestForm.addEventListener('submit', handleSuggestSubmit);
+        addOptionBtn.addEventListener('click', addOption);
+
+        // Results tab listeners
+        overviewTab.addEventListener('click', () => switchResultsTab('overview'));
+        chartTab.addEventListener('click', () => switchResultsTab('chart'));
+        detailedTab.addEventListener('click', () => switchResultsTab('detailed'));
+
+        // Close modal when clicking outside
+        suggestModal.addEventListener('click', (e) => {
+            if (e.target === suggestModal) {
+                hideSuggestModal();
+            }
+        });
+
+        function switchResultsTab(tab) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.results-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.results-content').forEach(c => c.classList.remove('active'));
+            
+            // Add active class to selected tab and content
+            document.getElementById(`${tab}-tab`).classList.add('active');
+            document.getElementById(`${tab}-content`).classList.add('active');
+            
+            // If switching to chart tab, render charts
+            if (tab === 'chart') {
+                setTimeout(() => renderCharts(), 100); // Small delay to ensure container is visible
+            }
+        }
+
+        function getCurrentPoll() {
+            return allPolls.find(poll => poll.id === currentPollId);
+        }
+
+        function loadPoll(pollId) {
+            currentPollId = pollId;
+            const poll = getCurrentPoll();
+            
+            if (!poll) return;
+
+            // Update poll display
+            currentPollTitle.textContent = poll.title;
+            currentPollDescription.textContent = poll.description;
+            currentPollCategory.textContent = poll.category;
+            currentPollVotes.textContent = `${poll.totalVotes} votes`;
+            
+            // Format end date
+            const endDate = new Date(poll.endDate).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            currentPollEndDate.textContent = `Ends: ${endDate}`;
+
+            // Update poll options
+            pollForm.innerHTML = '';
+            poll.options.forEach(option => {
+                const label = document.createElement('label');
+                label.className = 'option';
+                
+                label.innerHTML = `
+                    <input type="radio" name="poll-choice" value="${option.id}">
+                    <span>${option.text}</span>
+                `;
+                
+                pollForm.appendChild(label);
+            });
+
+            // Check if poll is closed or user has voted
+            const hasVoted = userVotes[pollId];
+            const isClosed = poll.status === 'closed';
+            
+            if (isClosed) {
+                voteBtn.textContent = 'Poll Closed';
+                voteBtn.disabled = true;
+                document.querySelectorAll('input[name="poll-choice"]').forEach(input => {
+                    input.disabled = true;
+                });
+                showResults();
+            } else if (hasVoted) {
+                voteBtn.textContent = 'Vote Submitted';
+                voteBtn.disabled = true;
+                document.querySelectorAll('input[name="poll-choice"]').forEach(input => {
+                    input.disabled = true;
+                });
+                showResults();
+            } else {
+                voteBtn.textContent = 'Cast Your Vote';
+                voteBtn.disabled = false;
+                document.querySelectorAll('input[name="poll-choice"]').forEach(input => {
+                    input.disabled = false;
+                });
+                resultsSection.classList.remove('show');
+            }
+
+            // Update active tab
+            updatePollTabs();
+        }
+
+        function updatePollTabs() {
+            pollTabs.innerHTML = '';
+            
+            // Show only active polls in tabs
+            const activePolls = allPolls.filter(poll => poll.status === 'active');
+            
+            activePolls.forEach(poll => {
+                const tab = document.createElement('div');
+                tab.className = `poll-tab ${poll.id === currentPollId ? 'active' : ''}`;
+                tab.textContent = poll.title.length > 40 ? poll.title.substring(0, 37) + '...' : poll.title;
+                tab.addEventListener('click', () => loadPoll(poll.id));
+                pollTabs.appendChild(tab);
+            });
+        }
+
+        function updateRecentPollsList() {
+            recentPollsList.innerHTML = '';
+            
+            allPolls.forEach(poll => {
+                const pollItem = document.createElement('div');
+                pollItem.className = `recent-poll-item ${poll.status === 'active' ? 'active-poll' : 'closed-poll'}`;
+                pollItem.addEventListener('click', () => loadPoll(poll.id));
+                
+                pollItem.innerHTML = `
+                    <div class="recent-poll-title">${poll.title}</div>
+                    <div class="recent-poll-info">
+                        <div class="recent-poll-votes">${poll.totalVotes} votes • ${poll.status}</div>
+                        <div class="recent-poll-category">${poll.category}</div>
+                    </div>
+                `;
+                
+                recentPollsList.appendChild(pollItem);
+            });
+        }
+
+        function handleVote() {
+            const selectedOption = document.querySelector('input[name="poll-choice"]:checked');
+            const poll = getCurrentPoll();
+            
+            if (!selectedOption) {
+                alert('Please select an option before voting!');
+                return;
+            }
+
+            if (userVotes[currentPollId]) {
+                alert('You have already voted in this poll!');
+                return;
+            }
+
+            if (poll.status === 'closed') {
+                alert('This poll has been closed.');
+                return;
+            }
+
+            // Update vote count
+            const optionId = selectedOption.value;
+            const option = poll.options.find(opt => opt.id === optionId);
+            option.votes++;
+            poll.totalVotes++;
+            userVotes[currentPollId] = optionId;
+
+            // Update display
+            currentPollVotes.textContent = `${poll.totalVotes} votes`;
+
+            // Disable voting
+            voteBtn.textContent = 'Vote Submitted';
+            voteBtn.disabled = true;
+            
+            // Disable all radio buttons
+            document.querySelectorAll('input[name="poll-choice"]').forEach(input => {
+                input.disabled = true;
+            });
+
+            // Show results
+            showResults();
+            
+            // Update recent polls list to reflect new vote count
+            updateRecentPollsList();
+                saveToLocalStorage();
+
+        }
+
+        function showResults() {
+            const poll = getCurrentPoll();
+            resultsSection.classList.add('show');
+            
+            // Update stats
+            updateResultsStats(poll);
+            
+            // Update overview results
+            updateOverviewResults(poll);
+            
+            // Update detailed results
+            updateDetailedResults(poll);
+            
+            // If chart tab is active, render charts
+            if (chartContent.classList.contains('active')) {
+                setTimeout(() => renderCharts(), 100);
+            }
+        }
+
+        function updateResultsStats(poll) {
+            totalVotesStat.textContent = poll.totalVotes;
+            
+            // Find leading option
+            const maxVotes = Math.max(...poll.options.map(opt => opt.votes));
+            const leadingOption = poll.options.find(opt => opt.votes === maxVotes);
+            const leadingPercentage = poll.totalVotes > 0 ? ((maxVotes / poll.totalVotes) * 100).toFixed(1) : 0;
+            
+            leadingOptionStat.textContent = `${leadingPercentage}%`;
+            
+            // Calculate participation rate (assuming 1000 eligible voters for demo)
+            const participationRate = ((poll.totalVotes / 1000) * 100).toFixed(1);
+            participationStat.textContent = `${participationRate}%`;
+        }
+
+        function updateOverviewResults(poll) {
+            overviewResultsContainer.innerHTML = '';
+            
+            // Find the winner
+            const maxVotes = Math.max(...poll.options.map(opt => opt.votes));
+            
+            poll.options.forEach(option => {
+                const percentage = poll.totalVotes > 0 ? ((option.votes / poll.totalVotes) * 100).toFixed(1) : 0;
+                const isWinner = option.votes === maxVotes && maxVotes > 0;
+                
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                
+                resultItem.innerHTML = `
+                    <div class="result-header">
+                        <div class="result-option-text">${option.text}</div>
+                        <div class="result-stats">
+                            <div class="result-percentage">${percentage}%</div>
+                            <div class="result-votes">${option.votes} votes</div>
+                        </div>
+                    </div>
+                    <div class="result-bar">
+                        <div class="result-fill ${isWinner ? 'winner' : ''}" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                
+                overviewResultsContainer.appendChild(resultItem);
+            });
+        }
+
+        function updateDetailedResults(poll) {
+            detailedResultsContainer.innerHTML = '';
+            
+            // Sort options by votes (descending)
+            const sortedOptions = [...poll.options].sort((a, b) => b.votes - a.votes);
+            const maxVotes = Math.max(...poll.options.map(opt => opt.votes));
+            
+            sortedOptions.forEach((option, index) => {
+                const percentage = poll.totalVotes > 0 ? ((option.votes / poll.totalVotes) * 100).toFixed(1) : 0;
+                const isWinner = option.votes === maxVotes && maxVotes > 0;
+                const rank = index + 1;
+                
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                
+                resultItem.innerHTML = `
+                    <div class="result-header">
+                        <div class="result-option-text">
+                            <strong>#${rank}</strong> ${option.text}
+                            ${isWinner ? '<span class="winner-badge">Winner</span>' : ''}
+                        </div>
+                        <div class="result-stats">
+                            <div class="result-percentage">${percentage}%</div>
+                            <div class="result-votes">${option.votes} votes</div>
+                        </div>
+                    </div>
+                    <div class="result-bar">
+                        <div class="result-fill ${isWinner ? 'winner' : ''}" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                
+                detailedResultsContainer.appendChild(resultItem);
+            });
+        }
+
+        function renderCharts() {
+            const poll = getCurrentPoll();
+            if (!poll || poll.totalVotes === 0) return;
+
+            destroyExistingCharts();
+
+            const labels = poll.options.map(opt => opt.text.length > 30 ? opt.text.substring(0, 27) + '...' : opt.text);
+            const data = poll.options.map(opt => opt.votes);
+            const percentages = poll.options.map(opt => 
+                poll.totalVotes > 0 ? ((opt.votes / poll.totalVotes) * 100).toFixed(1) : 0
+            );
+
+            // Color palette
+            const colors = [
+                '#667eea', '#764ba2', '#f093fb', '#f5576c',
+                '#4facfe', '#00f2fe', '#43e97b', '#38f9d7'
+            ];
+
+            // Pie Chart
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            pieChart = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 3,
+                        borderColor: '#fff',
+                        hoverBorderWidth: 5,
+                        hoverBorderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const percentage = percentages[context.dataIndex];
+                                    const votes = data[context.dataIndex];
+                                    return `${context.label}: ${votes} votes (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '50%'
+                }
+            });
+
+            // Bar Chart
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Votes',
+                        data: data,
+                        backgroundColor: colors.map(color => color + '80'), // Add transparency
+                        borderColor: colors,
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const percentage = percentages[context.dataIndex];
+                                    const votes = context.parsed.y;
+                                    return `${votes} votes (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            },
+                            title: {
+                                display: true,
+                                text: 'Number of Votes'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Options'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function destroyExistingCharts() {
+            if (pieChart) {
+                pieChart.destroy();
+                pieChart = null;
+            }
+            if (barChart) {
+                barChart.destroy();
+                barChart = null;
+            }
+        }
+
+        function showSuggestModal() {
+            suggestModal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function hideSuggestModal() {
+            suggestModal.classList.remove('show');
+            document.body.style.overflow = 'auto'; // Restore scrolling
+            resetSuggestForm();
+        }
+
+        function resetSuggestForm() {
+            suggestForm.reset();
+            successMessage.classList.remove('show');
+            
+            // Reset to default 2 options
+            const optionInputs = document.getElementById('option-inputs');
+            optionInputs.innerHTML = `
+                <div class="option-input-group">
+                    <input type="text" class="form-input option-input" 
+                           placeholder="Option 1 (e.g., Yes, extend to 10 PM)" required>
+                    <button type="button" class="remove-option-btn" onclick="removeOption(this)">Remove</button>
+                </div>
+                <div class="option-input-group">
+                    <input type="text" class="form-input option-input" 
+                           placeholder="Option 2 (e.g., No, keep current hours)" required>
+                    <button type="button" class="remove-option-btn" onclick="removeOption(this)">Remove</button>
+                </div>
+            `;
+        }
+
+        function addOption() {
+            const optionInputs = document.getElementById('option-inputs');
+            const optionCount = optionInputs.children.length + 1;
+            
+            if (optionCount > 6) {
+                alert('Maximum 6 options allowed per poll.');
+                return;
+            }
+            
+            const newOption = document.createElement('div');
+            newOption.className = 'option-input-group';
+            newOption.innerHTML = `
+                <input type="text" class="form-input option-input" 
+                       placeholder="Option ${optionCount}" required>
+                <button type="button" class="remove-option-btn" onclick="removeOption(this)">Remove</button>
+            `;
+            
+            optionInputs.appendChild(newOption);
+        }
+
+        function removeOption(button) {
+            const optionInputs = document.getElementById('option-inputs');
+            
+            if (optionInputs.children.length <= 2) {
+                alert('A poll must have at least 2 options.');
+                return;
+            }
+            
+            button.parentElement.remove();
+        }
+
+        function handleSuggestSubmit(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const title = document.getElementById('poll-title').value.trim();
+            const description = document.getElementById('poll-description').value.trim();
+            const submitterName = document.getElementById('submitter-name').value.trim() || 'Anonymous';
+            const submitterEmail = document.getElementById('submitter-email').value.trim();
+            
+            // Get all option values
+            const optionInputs = document.querySelectorAll('.option-input');
+            const options = [];
+            let isValid = true;
+            
+            optionInputs.forEach((input, index) => {
+                const value = input.value.trim();
+                if (value) {
+                    options.push(value);
+                } else {
+                    isValid = false;
+                }
+            });
+            
+            if (!isValid || options.length < 2) {
+                alert('Please fill in all option fields. A poll must have at least 2 options.');
+                return;
+            }
+            
+            // Create suggestion object
+            const suggestion = {
+                id: Date.now(),
+                title: title,
+                description: description,
+                options: options,
+                submitterName: submitterName,
+                submitterEmail: submitterEmail,
+                status: 'pending',
+                submittedAt: new Date().toISOString()
+            };
+            
+            // Store the suggestion
+            pollSuggestions.push(suggestion);
+            
+            // Show success message
+            successMessage.classList.add('show');
+            
+            // Clear form
+            suggestForm.reset();
+            
+            // Auto-hide modal after 3 seconds
+            setTimeout(() => {
+                hideSuggestModal();
+            }, 3000);
+            
+            console.log('New poll suggestion:', suggestion);
+            console.log('All suggestions:', pollSuggestions);
+        }
+
+        // Check if user has already voted (in a real app, this would be stored on server)
+        function checkVotingStatus() {
+            // In a real app, this would load from a database
+            // For demo, we'll simulate some previous votes
+            userVotes[2] = 'downtown'; // User voted in Community Center poll
+            userVotes[4] = 'schools';  // User voted in Snow Removal poll
+        }
+
+    // Initialize the app
+function initializeApp() {
+    loadFromLocalStorage();   // ✅ restore polls, votes, suggestions
+    loadPoll(currentPollId);  // load the default/current poll
+    updateRecentPollsList();  // update sidebar
+}
+
+initializeApp();
+
+
+
+        // Save & Load helpers
+function saveToLocalStorage() {
+    localStorage.setItem('allPolls', JSON.stringify(allPolls));
+    localStorage.setItem('userVotes', JSON.stringify(userVotes));
+    localStorage.setItem('pollSuggestions', JSON.stringify(pollSuggestions));
+}
+
+function loadFromLocalStorage() {
+    const savedPolls = localStorage.getItem('allPolls');
+    const savedVotes = localStorage.getItem('userVotes');
+    const savedSuggestions = localStorage.getItem('pollSuggestions');
+
+    if (savedPolls) allPolls = JSON.parse(savedPolls);
+    if (savedVotes) userVotes = JSON.parse(savedVotes);
+    if (savedSuggestions) pollSuggestions = JSON.parse(savedSuggestions);
+}
+// Show Admin Panel when #admin in URL
+window.addEventListener('hashchange', () => {
+    if (location.hash === "#admin") {
+        document.getElementById("admin-panel").style.display = "block";
+        renderSuggestions();
+    } else {
+        document.getElementById("admin-panel").style.display = "none";
+    }
+});
+
+function renderSuggestions() {
+    const container = document.getElementById("suggestions-list");
+    container.innerHTML = "";
+
+    if (pollSuggestions.length === 0) {
+        container.innerHTML = "<p>No suggestions submitted.</p>";
+        return;
+    }
+
+    pollSuggestions.forEach(suggestion => {
+        const div = document.createElement("div");
+        div.className = "suggestion-item";
+        div.innerHTML = `
+            <h3>${suggestion.title}</h3>
+            <p>${suggestion.description}</p>
+            <p><strong>Submitted by:</strong> ${suggestion.submitterName} (${suggestion.submitterEmail})</p>
+            <p><strong>Options:</strong> ${suggestion.options.join(", ")}</p>
+            <button onclick="approveSuggestion(${suggestion.id})">Approve</button>
+            <button onclick="rejectSuggestion(${suggestion.id})">Reject</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function approveSuggestion(id) {
+    const suggestion = pollSuggestions.find(s => s.id === id);
+    if (!suggestion) return;
+
+    // Convert suggestion to new poll
+    const newPoll = {
+        id: allPolls.length + 1,
+        title: suggestion.title,
+        description: suggestion.description,
+        options: suggestion.options.map((opt, i) => ({ id: "opt" + i, text: opt, votes: 0 })),
+        totalVotes: 0,
+        status: "active",
+        endDate: new Date(Date.now() + 7*24*60*60*1000).toISOString().split("T")[0], // +7 days
+        category: "Community"
+    };
+
+    allPolls.push(newPoll);
+    pollSuggestions = pollSuggestions.filter(s => s.id !== id);
+
+    saveToLocalStorage();
+    renderSuggestions();
+    updatePollTabs();
+    updateRecentPollsList();
+    alert("Suggestion approved and added as a poll!");
+}
+
+function rejectSuggestion(id) {
+    pollSuggestions = pollSuggestions.filter(s => s.id !== id);
+    saveToLocalStorage();
+    renderSuggestions();
+}
+
+
+function saveToLocalStorage() {
+    localStorage.setItem('allPolls', JSON.stringify(allPolls));
+    localStorage.setItem('userVotes', JSON.stringify(userVotes));
+    localStorage.setItem('pollSuggestions', JSON.stringify(pollSuggestions));
+}
+
+function loadFromLocalStorage() {
+    const storedPolls = localStorage.getItem('allPolls');
+    const storedVotes = localStorage.getItem('userVotes');
+    const storedSuggestions = localStorage.getItem('pollSuggestions');
+
+    if (storedPolls) allPolls = JSON.parse(storedPolls);
+    if (storedVotes) userVotes = JSON.parse(storedVotes);
+    if (storedSuggestions) pollSuggestions = JSON.parse(storedSuggestions);
+}
+
+function approveSuggestion(id) {
+    const suggestion = pollSuggestions.find(s => s.id === id);
+    if (!suggestion) return;
+
+    // Convert suggestion → poll
+    const newPoll = {
+        id: allPolls.length + 1,
+        title: suggestion.title,
+        description: suggestion.description,
+        options: suggestion.options.map((opt, i) => ({
+            id: `opt${i+1}`,
+            text: opt,
+            votes: 0
+        })),
+        totalVotes: 0,
+        status: 'active',
+        endDate: new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0], // default 7 days
+        category: 'General'
+    };
+
+    allPolls.push(newPoll);
+    suggestion.status = 'approved';
+
+    saveToLocalStorage();
+    renderSuggestions();
+    updateRecentPollsList();
+    updatePollTabs();
+}
+
+function rejectSuggestion(id) {
+    const suggestion = pollSuggestions.find(s => s.id === id);
+    if (!suggestion) return;
+
+    suggestion.status = 'rejected';
+    saveToLocalStorage();
+    renderSuggestions();
+}
+
+    </script>
+</body>
+</html>
