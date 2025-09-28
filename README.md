@@ -28,7 +28,7 @@ Running Locally
 Clone the repository:
 
 bash
-git clone https://github.com/yourusername/voteconnect.git
+git clone https://jenisha06.github.io/voteConnect/
 Open index.html in your browser
 
 Start voting and interacting with the app!
